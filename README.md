@@ -1,18 +1,18 @@
 # EzFMDB
-EzFMDB (Easy FileMaker DB) is a Warpper Class that provide more friendly coding interface.
-
-Sorry about my broken English, please see the code example for the detailed information.
-
+EzFMDB (Easy FileMaker DB) is a Warpper Class that provide more friendly coding interface.  
+  
+Sorry about my broken English, please see the code example for the detailed information.  
+  
 Require:
 1. PHP 5.6+
 2. Enable cURL module in PHP
 3. Put FM_PHP_API lib into fm_api/ folder
-
+  
 ---
-
+  
 # Query parameter
-EzFMDB provide a series of parameter when calling select(), update(), delete() method.
-
+EzFMDB provide a series of parameter when calling select(), update(), delete() method.  
+  
 Query parameter have 4 parts:
 1. WHERE Part, Keyword is **WHERE** or **OMIT**
 2. ORDER Part, Keyword is **ORDER BY**
@@ -52,16 +52,16 @@ There are two ways to use WHERE and ORDER Part:
 - There is no "NOT" operator
 - "WHERE" will search record from **"All records"** not from **"Found set"**
 - "OMIT" will remove record from **"Found set"**
-
-| idx |name  |gender|school|age|
-|:---:|:----:|:----:|:----:|:-:|
-|1    |A     |1     |NCKU  |13 |
-|2    |B     |0     |NTU   |9  |
-|3    |C     |1     |FHSH  |8  |
-|4    |D     |1     |MIT   |31 |
-|5    |E     |0     |NCKU  |5  |
-|6    |darkk6|0     |NCKU  |20 |
-
+  
+| idx |name  |gender|school|age|  
+|:---:|:----:|:----:|:----:|:-:|  
+|1    |A     |1     |NCKU  |13 |  
+|2    |B     |0     |NTU   |9  |  
+|3    |C     |1     |FHSH  |8  |  
+|4    |D     |1     |MIT   |31 |  
+|5    |E     |0     |NCKU  |5  |  
+|6    |darkk6|0     |NCKU  |20 |  
+  
 ```php
 	$r = $db->delete("layout",
 		"WHERE", array("age"=>">10"),		//found idx=1,4,6
@@ -106,28 +106,30 @@ There are two ways to use WHERE and ORDER Part:
 - The logger object must have a public function named "log" with one string parameter.
 
 #### getFileMaker() 
-**@return** _FileMaker_
+**@return** _FileMaker_  
 Get official FileMaker object to access it's feature.
 ```php
 	$fm = $db->getFileMaker();
 	$cmd = $fm->newFindAllCommand(...);
 	...
 ```
-
+  
 ### getDatabases() 
-**@return** _array( string )_
+**@return** _array( string )_  
 Get all database names that you can access with current account and password.
 ```php
 	$list = $db->getDatabases();
 ```
 
 ### isError(_$object_) 
-**@return** _int_
-| Return value | Meaning                |
-|:------------:|:-----------------------|
-| 0            | Not an error Object    |
-| 1            | FileMaker_Error Object |
-| 2            | EzFMDB_ERR Object      |
+**@return** _int_  
+  
+| Return value | Meaning                |  
+|:------------:|:-----------------------|  
+| 0            | Not an error Object    |  
+| 1            | FileMaker_Error Object |  
+| 2            | EzFMDB_ERR Object      |  
+  
 Check given object is FileMaker_Error or EzFMDB_ERR.
 ```php
 	$cmd = $db->delete("Layout");
@@ -137,16 +139,16 @@ Check given object is FileMaker_Error or EzFMDB_ERR.
 ```
 
 ### getLastError() 
-**@return** _FileMaker_Error_
+**@return** _FileMaker_Error_  
 Get last error object.
 ```php
 	$err = $db->getLastError();
 ```
 
 ### getErrInfo(_$obj [,$json]_) 
-**@param** $obj FileMaker_Error object to be convert
-**@param** $json return with json string [true]
-**@return** _EzFMDB_ERR_
+**@param** $obj FileMaker_Error object to be convert  
+**@param** $json return with json string [true]  
+**@return** _EzFMDB_ERR_  
 Convert FileMaker_Error into EzFMDB_ERR. This method will return array when $json = false or **null** when the given object is not a FileMaker_Error .
 ```php
 	//Assume error 105 occurred
@@ -158,24 +160,24 @@ Convert FileMaker_Error into EzFMDB_ERR. This method will return array when $jso
 	$err = $db->getErrInfo($res,false);
 	// return array( "ErrCode"=>105 , "ErrMsg"=>"Layout is missing" )
 ```
-[FileMaker Error Code Reference](http://help.filemaker.com/app/answers/detail/a_id/10790/~/filemaker-pro-error-code-reference-guide)
-
+[FileMaker Error Code Reference](http://help.filemaker.com/app/answers/detail/a_id/10790/~/filemaker-pro-error-code-reference-guide)  
+  
 ### getLayouts()
-**@return** _array( string )_
+**@return** _array( string )_  
 Get layout name list from this database.
 ```php
 	$list = $db->getLayouts();
 ```
-
+  
 ### getScripts() 
-**@return** _array( string )_
+**@return** _array( string )_  
 Get script name list from this database.
 ```php
 	$list = $db->getScripts();
 ```
-
+  
 ### getFields(_$layout_) 
-**@return** _array( FieldInfo ) / EzFMDB_ERR_
+**@return** _array( FieldInfo ) / EzFMDB_ERR_  
 Get Field info from this layout. Each field have these info:
 - name : Name of field
 - repetition : repetition count of this field
@@ -186,9 +188,9 @@ Get Field info from this layout. Each field have these info:
 ```php
 	$fieldsInfo = $db->getFields("LayoutName");
 ```
-
+  
 ### getResult(_$fmResultObj_)
-**@return** _array( data ) / NULL_
+**@return** _array( data ) / NULL_  
 Get record [RecData][1] from given FileMaker_Result object.
 ```php
 	$dataSet = $db->getResult($fmResult);
@@ -208,36 +210,36 @@ Get record [RecData][1] from given FileMaker_Result object.
 		)
 	*/
 ```
-[1]: Records returned from EzFMDB are all this format.
-
+[1]: Records returned from EzFMDB are all this format.  
+  
 ### runScript(_$layout, $script [,$param=null]_) 
-**@param** $layout The layout name to perform this script
-**@param** $script The script name to be performed
-**@param** $param The parameter pass to script.
-**@return** _TRUE / EzFMDB_ERR_ , TRUE when success.
+**@param** $layout The layout name to perform this script  
+**@param** $script The script name to be performed  
+**@param** $param The parameter pass to script.  
+**@return** _TRUE / EzFMDB_ERR_ , TRUE when success.  
 Perform a script, note that the value assigned in "Exit Script[]" will not pass to PHP.
 ```php
 	$isSuccess = $db->runScript("LayoutName","ScriptName");
 ```
-
+  
 ---
-
+  
 ### select(_$layout , $fields [, **QueryParameters** ]_) 
-**@param** $layout Specific layout name
-**@param** $fields Field name to be select. Can be sql-like sytax string or array
-**@QueryParameters** See **Query Parameters** section
-**@return** _array( RecData ) / EzFMDB_ERR_
+**@param** $layout Specific layout name  
+**@param** $fields Field name to be select. Can be sql-like sytax string or array  
+**@QueryParameters** See **Query Parameters** section  
+**@return** _array( RecData ) / EzFMDB_ERR_  
 Select specific records (according to QueryParameters ) from the layout.
-
-| idx |name  |gender|school|age|The Code|
-|:---:|:----:|:----:|:----:|:-:|:------:|
-|1    |A     |1     |NCKU  |1  |33      |
-|2    |B     |0     |NTU   |9  |445     |
-|3    |C     |1     |FHSH  |8  |3       |
-|4    |D     |1     |MIT   |31 |423     |
-|5    |E     |0     |NCKU  |5  |76      |
-|6    |darkk6|0     |NCKU  |20 |234     |
-
+  
+| idx |name  |gender|school|age|The Code|  
+|:---:|:----:|:----:|:----:|:-:|:------:|  
+|1    |A     |1     |NCKU  |1  |33      |  
+|2    |B     |0     |NTU   |9  |445     |  
+|3    |C     |1     |FHSH  |8  |3       |  
+|4    |D     |1     |MIT   |31 |423     |  
+|5    |E     |0     |NCKU  |5  |76      |  
+|6    |darkk6|0     |NCKU  |20 |234     |  
+  
 ```php
 	//Use sql like string in "fields" parameter
 	$r = $db->select("LayoutName" , "name,`The Code`");
@@ -260,13 +262,13 @@ Select specific records (according to QueryParameters ) from the layout.
 		"LIMIT 1,2"							//Skip 1 , max 2 [5,3]
 	);
 ```
-
+  
 ### update(_$layout , $fvPair  [, **QueryParameters** ]_)
-**@param** $layout Specific layout name
-**@param** $fvPair sql-like sytax string or array (key:fieldName , value:value).
-**@QueryParameters** See **Query Parameters** section
-**@return** _int / EzFMDB_ERR / array( EzFMDB_ERR )_
-Update all records that match the condition. This method will return affected record count or EzFMDB_ERR when error occurred.
+**@param** $layout Specific layout name  
+**@param** $fvPair sql-like sytax string or array (key:fieldName , value:value).  
+**@QueryParameters** See **Query Parameters** section  
+**@return** _int / EzFMDB_ERR / array( EzFMDB_ERR )_  
+Update all records that match the condition. This method will return affected record count or EzFMDB_ERR when error occurred.  
 The $fvPair parameter structure is the same as RecData.
 ```php
 	//update all Records set "name" to "darkk6" and "The Code" to "0"
@@ -283,44 +285,44 @@ The $fvPair parameter structure is the same as RecData.
 				)
 			);
 ```
-
+  
 ### updateByRecID(_$layout, $fvPair, $rec_id [,$doEscape=true_)
-**@param** $layout Specific layout name
-**@param** $fvPair See update() parameter info.
-**@param** $rec_id Specific Record ID (fm_recid)
-**@param** $doEscape Whether escape special character ot not.
-**@return** _TRUE / EzFMDB_ERR_
+**@param** $layout Specific layout name  
+**@param** $fvPair See update() parameter info.  
+**@param** $rec_id Specific Record ID (fm_recid)  
+**@param** $doEscape Whether escape special character ot not.  
+**@return** _TRUE / EzFMDB_ERR_  
 Update record with specific Rec_ID, return TRUE when success.
 ```php
 	$r = $db->updateByRecID("LayoutName","name='darkk6',`The Code`=0",$fm_recid);
 	$r = $db->updateByRecID("LayoutName",array( "name"=>"darkk6" ),$fm_recid);
 ```
-
+  
 ### delete(_$layout [, **QueryParameters** ]_)
-**@param** $layout Specific layout name
-**@QueryParameters** See **Query Parameters** section
-**@return** _int / EzFMDB_ERR / array( EzFMDB_ERR )_
+**@param** $layout Specific layout name  
+**@QueryParameters** See **Query Parameters** section  
+**@return** _int / EzFMDB_ERR / array( EzFMDB_ERR )_  
 Update all records that match the condition. This method will return deleted record count or EzFMDB_ERR when error occurred.
 ```php
 	$r = $db->delete("LayoutName");
 	$r = $db->delete("LayoutName","WHERE",array("name"=>"darkk6","The Code"=>"0"));
 ```
-
+  
 ### deleteByRecID(_$layout, $rec_id [,$doEscape=true]_)
-**@param** $layout Specific layout name
-**@param** $rec_id Specific Record ID (fm_recid)
-**@param** $doEscape Whether escape special character ot not.
-**@return** _TRUE / EzFMDB_ERR_
+**@param** $layout Specific layout name  
+**@param** $rec_id Specific Record ID (fm_recid)  
+**@param** $doEscape Whether escape special character ot not.  
+**@return** _TRUE / EzFMDB_ERR_  
 Delete record with specific Rec_ID, return TRUE when success.
 ```php
 	$r = $db->deleteByRecID("LayoutName",$fm_recid);
 ```
-
+  
 ### insert($layout,$fvPair, $doEscape=true)
-**@param** $layout Specific layout name
-**@param** $fvPair Only accept array-type parameter. See update() parameter info.
-**@param** $doEscape Whether escape special character ot not.
-**@return** _TRUE / EzFMDB_ERR_
+**@param** $layout Specific layout name  
+**@param** $fvPair Only accept array-type parameter. See update() parameter info.  
+**@param** $doEscape Whether escape special character ot not.  
+**@return** _TRUE / EzFMDB_ERR_  
 Add a new record , return TRUE when success.
 ```php
 	$r = $db->insert("LayoutName",array( "name"=>"darkk6" ));
