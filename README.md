@@ -10,14 +10,14 @@ Require:
   
 ---
   
-# Query parameter
+# â˜…Query parameter
 EzFMDB provide a series of parameter when calling select(), update(), delete() method.  
   
 Query parameter have 4 parts:
 1. WHERE Part, Keyword is **WHERE** or **OMIT**
 2. ORDER Part, Keyword is **ORDER BY**
 3. LIMIT Part, Keyword is **LIMIT**
-4. Escaping¡A**The last parameter** means whether escape special character or not.[boolean default:true]
+4. Escapingï¼Œ**The last parameter** means whether escape special character or not.[boolean default:true]
 
 LIMIT Part syntax: **LIMIT** skip _[,max]_
 - skip : number of record to skip (can be zero)
@@ -46,7 +46,7 @@ There are two ways to use WHERE and ORDER Part:
 	);
 ```
 
-##### ¡¸WHERE Part
+##### â˜†WHERE Part
 - Can be assigned multi-times, EzFMDB will apply all of them with the given order.
 - This is just act like "Perform Find[]" in FileMaker Script step.
 - There is no "NOT" operator
