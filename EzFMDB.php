@@ -73,7 +73,7 @@
 		}
 		
 		/**
-		 *  @brief 取得 Container 的資料(Binary)
+		 *  @brief 取得 Container 的資料
 		 *  
 		 *  @param [in] $url 目標 Contianer 的 Data URL
 		 *  @return 
@@ -135,14 +135,23 @@
 		 *
 		 */
 		public function getErrInfo($errObj,$json=true){
-			if( $this->isError($errObj) ){
+			$errType = $this->isError($errObj);
+			if( $errType==EZFMDB_ERR ){
+				return is_string($errObj) ? ( $json ? $errObj : json_decode($errObj,true) ) : ( $json ? json_encode($errObj) : $errObj );
+			}else if( $errType == FM_ERR ){
 				$result = array( "ErrCode"=>$errObj->code , "ErrMsg"=>$errObj->getMessage() );
 				return $json ? json_encode($result) : $result;
 			}else if( is_array($errObj) ){
 				$tmp = array();
 				foreach($errObj as $err){
-					if( !$this->isError($err) ) continue;
-					array_push($tmp,array("ErrCode"=>$err->code,"ErrMsg"=>$err->getMessage()));
+					$errType=$this->isError($err);
+					if( $errType == NOT_ERR ) continue;
+					else if( $errType==EZFMDB_ERR ){
+						if( is_string($err) ) array_push($tmp,json_decode($err,true));
+						else array_push($tmp,$err);
+					}else if( $errType==FM_ERR ){
+						array_push($tmp,array("ErrCode"=>$err->code,"ErrMsg"=>$err->getMessage()));
+					}
 				}
 				return $json ? json_encode($tmp) : $tmp;
 			}
@@ -166,7 +175,7 @@
 				if( is_array($tmp) && count($tmp)==2 ) return EZFMDB_ERR;
 				return NOT_ERR;
 			}else
-			if( is_array($obj) && count($obj)==2 && array_key_exists("ErrMsg",$obj) && array_key_exists("ErrCode",$obj) ) return EZFMDB_ERR;
+				if( is_array($obj) && count($obj)==2 && array_key_exists("ErrMsg",$obj) && array_key_exists("ErrCode",$obj) ) return EZFMDB_ERR;
 			return NOT_ERR;
 		}
 		
