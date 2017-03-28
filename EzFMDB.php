@@ -37,7 +37,8 @@
 		//屬於設定類型的
 		private $_noCastResult=false,		//傳回資料強制以 string 呈現 (除了 fm_recid 外)
 				$_castTimesToInt=false,		//時間類型(date,time,timestamp) 強制轉為 int
-				$_convertTimesFormat=false;	//時間類型(date,time,timestamp) 轉為 yyyy/mm/dd HH:mm:ss 格式(字串)
+				$_convertTimesFormat=false,	//時間類型(date,time,timestamp) 轉為 yyyy/mm/dd HH:mm:ss 格式(字串)
+				$_getContainerWithUrl=false;//取得 container url 時，是否包含前面的網址( false 會由 /fmi/... 開始， true 則為 http(s)://... 開頭)
 		
 		
 	/*=================== @BLOCK Constructor 建構子 ===================*/
@@ -62,6 +63,9 @@
 		}
 		public function setConvertTimesFormat($val){
 			$this->_convertTimesFormat = boolval($val);
+		}
+		public function setContainerWithURL($val){
+			$this->_getContainerWithUrl = boolval($val);
 		}
 		
 		/**
@@ -171,7 +175,7 @@
 			// 透過 getErrInfo 取得的資料也要能判斷
 			if( is_string($obj) ){
 				if( strpos($obj,"ErrCode")===FALSE || strpos($obj,"ErrMsg")===FALSE ) return NOT_ERR;
-				$tmp = json_decode($string,true);
+				$tmp = json_decode($obj,true);
 				if( is_array($tmp) && count($tmp)==2 ) return EZFMDB_ERR;
 				return NOT_ERR;
 			}else
@@ -222,7 +226,7 @@
 			if($this->isError($layoutObj)){
 				$this->_lastError = $layoutObj;
 				$return = $this->getErrInfo($layoutObj);
-				/* 紀錄錯誤結果 */ $this->log( __METHOD__ ,$return);
+				/* 紀錄錯誤結果 */ $this->log( __METHOD__ ." #".__LINE__ ,$return);
 				return $return;
 			}
 			$result = array();
@@ -245,18 +249,22 @@
 		 *  
 		 *  @param [in] $layout 要在哪個 layout 執行此 Script
 		 *  @param [in] $scriptName 要執行的 Script 名稱
-		 *  @param [in] $params 傳遞給 Script 的參數
+		 *  @param [in] $params 傳遞給 Script 的參數(多個會自動以 \r 串接)
 		 *  @return 成功將傳回 true , 否則為 EZFMDB_ERR
 		 */
-		public function runScript( $layout, $scriptName, $params = null ) {
+		public function runScript( $layout, $scriptName,...$params) {
 			if( empty($layout) ) throw new Exception('Layout name is required');
 			if( empty($scriptName) ) throw new Exception('Script name is required');
-
+			
+			if( count($params)==0 ) $params=null;
+			else if( count($params)==1 ) $params=$params[0];
+			else $params=implode("\r",$params);
+			
 			$cmd = $this->_fm->newPerformScriptCommand( $layout, $scriptName, $params );
 			if( $this->isError($cmd) ){
 				$this->_lastError = $cmd;
 				$return = $this->getErrInfo($cmd);
-				/* 紀錄錯誤結果 */ $this->log( __METHOD__ ,$return);
+				/* 紀錄錯誤結果 */ $this->log( __METHOD__ ." #".__LINE__ ,$return);
 				return $return;
 			}
 			
@@ -264,11 +272,11 @@
 			if( $this->isError($res) ){
 				$this->_lastError = $res;
 				$return = $this->getErrInfo($res);
-				/* 紀錄錯誤結果 */ $this->log( __METHOD__ ,$return);
+				/* 紀錄錯誤結果 */ $this->log( __METHOD__ ." #".__LINE__ ,$return);
 				return $return;
 			}
 			
-			/* 紀錄 */ $this->log( __METHOD__ ,$scriptName,$params);
+			/* 紀錄 */ $this->log( __METHOD__ ." #".__LINE__ ,$scriptName,$params);
 			$this->_lastError = null;
 			return TRUE;
 		}
@@ -283,7 +291,7 @@
 		 *  					可以使用空字串 "" 代表只選出 FileMaker 內部用的 record_id (fm_recid)
 		 *  					但欄位名稱不可有逗號，若需要，請使用 string array 形式
 		 *  					
-		 *  @return 查詢後的結果(會多帶一個 fm_recid 欄位) 或 FileMaker_Error
+		 *  @return 查詢後的結果(會多帶一個 fm_recid 欄位) 或 EzFMDB_ERR
 		 *  
 		 *  @note 	1. 傳回的資料順序不會按照 $fields 所給的順序排序
 		 *  		2. 傳回資料會根據設定轉型 , 時間、日期格式若指定要轉為 int 且原內容為空時，會傳回 -1
@@ -330,7 +338,7 @@
 			if( $this->isError($cmd) ){
 				$this->_lastError = $cmd;
 				$return = $this->getErrInfo($cmd);
-				/* 紀錄錯誤結果 */ $this->log( __METHOD__ ,$return);
+				/* 紀錄錯誤結果 */ $this->log( __METHOD__ ." #".__LINE__ ,$return);
 				return $return;
 			}
 			
@@ -362,14 +370,14 @@
 				else $cmd->setRange($query["LIMIT"][0],$query["LIMIT"][1]);
 			}
 			
-			/* 紀錄 query 資料 */ $this->log( __METHOD__ ,array( "layout"=>$layout , "fields" => $fieldArray ),$query);
+			/* 紀錄 query 資料 */ $this->log( __METHOD__ ." #".__LINE__ ,array( "layout"=>$layout , "fields" => $fieldArray ),$query);
 			
 			$fmResult = $cmd->execute();
 			$isError = $this->isError( $fmResult ); //這個不可能出現 EZFMDB_ERR
 			if ( $isError == FM_ERR ){
 				$this->_lastError = $fmResult;
 				$return = $this->getErrInfo($fmResult);
-				/* 紀錄錯誤結果 */ $this->log( __METHOD__ ,$return);
+				/* 紀錄錯誤結果 */ $this->log( __METHOD__ ." #".__LINE__ ,$return);
 				return $return;
 			}
 			
@@ -410,20 +418,20 @@
 				}
 			}else if( !is_array($fvPair) ) throw new Exception('Invalid field-value pair assign.');
 			
-			/* 紀錄 query 資料 */ $this->log( __METHOD__ ,"Calling internal_select");
+			/* 紀錄 query 資料 */ $this->log( __METHOD__ ." #".__LINE__ ,"Calling internal_select");
 			$selectResult = $this->internal_call_select($layout,"",array_slice($args,2));
 			
 			$updateCount=0;
 			$errList=array();
 			if($this->isError($selectResult)){
 				//如果這裡發生錯誤，代表是 select 發生錯誤，此時 lastError 就已經是原本的錯誤了 , 傳回的錯誤是 EZDBFM_ERR
-				/* 紀錄錯誤結果 */ $this->log( __METHOD__ ,$selectResult);
+				/* 紀錄錯誤結果 */ $this->log( __METHOD__ ." #".__LINE__ ,$selectResult);
 				return $selectResult;
 			}else{
 				$lastArg = $args[count($args)-1];
 				$doEscape = ( is_bool($lastArg) ? $lastArg : true);
 				
-				/* 紀錄準備開始 */ $this->log( __METHOD__ ,array("layout"=>$layout));
+				/* 紀錄準備開始 */ $this->log( __METHOD__ ." #".__LINE__ ,array("layout"=>$layout));
 				foreach($selectResult as $record){
 					//呼叫 updateByRecID 處理
 					$res = $this->updateByRecID($layout,$fvPair,$record['fm_recid'],$doEscape);
@@ -472,7 +480,7 @@
 			if( $this->isError($cmd) ){
 				$this->_lastError = $cmd;
 				$return = $this->getErrInfo($cmd);
-				/* 紀錄錯誤結果 */ $this->log( __METHOD__ ,$return);
+				/* 紀錄錯誤結果 */ $this->log( __METHOD__ ." #".__LINE__ ,$return);
 				return $return;
 			}
 			
@@ -483,7 +491,7 @@
 				
 				$fieldObj = $layoutObj->getField($f);	//等一下用來計算 repetition
 				if($this->isError($fieldObj)){
-					$this->log(__METHOD__,$this->getErrInfo($fieldObj));
+					$this->log(__METHOD__ ." #".__LINE__,$this->getErrInfo($fieldObj));
 					continue;
 				}
 				$repCount = $fieldObj->getRepetitionCount();
@@ -509,12 +517,12 @@
 			if($this->isError($res)) {
 				$this->_lastError = $res;
 				$return = $this->getErrInfo($res);
-				/* 紀錄錯誤結果 */ $this->log( __METHOD__ ,$return);
+				/* 紀錄錯誤結果 */ $this->log( __METHOD__ ." #".__LINE__ ,$return);
 				return $return;
 			}
 			
 			$this->_lastError = null;
-			/* 紀錄結果 */ $this->log( __METHOD__ ,array("layout"=>$layout,"recid"=>$rec_id),$fvPair);
+			/* 紀錄結果 */ $this->log( __METHOD__ ." #".__LINE__ ,array("layout"=>$layout,"recid"=>$rec_id),$fvPair);
 			return TRUE;
 		}
 	
@@ -537,19 +545,19 @@
 			$deleteCount=0;
 			$errList=array();
 			
-			/* 紀錄 query 資料 */ $this->log( __METHOD__ ,"Calling internal_select");
+			/* 紀錄 query 資料 */ $this->log( __METHOD__ ." #".__LINE__ ,"Calling internal_select");
 			//直接根據 WHERE 條件尋找要準備刪除的目標
 			$selectResult = $this->internal_call_select($layout,"",array_slice($args,1));
 			
 			if($this->isError($selectResult)){
 				//如果這裡發生錯誤，代表是 select 發生錯誤，此時 lastError 就已經是原本的錯誤了 , 傳回的錯誤是 EZDBFM_ERR
-				/* 紀錄錯誤結果 */ $this->log( __METHOD__ ,$selectResult);
+				/* 紀錄錯誤結果 */ $this->log( __METHOD__ ." #".__LINE__ ,$selectResult);
 				return $selectResult;
 			}else{
 				$lastArg = $args[count($args)-1];
 				$doEscape = ( is_bool($lastArg) ? $lastArg : true);
 				
-				/* 紀錄準備開始 */ $this->log( __METHOD__ ,array("layout"=>$layout));
+				/* 紀錄準備開始 */ $this->log( __METHOD__ ." #".__LINE__ ,array("layout"=>$layout));
 				foreach($selectResult as $record){
 					//呼叫 deleteByRecID 處理
 					$res = $this->deleteByRecID($layout,$record['fm_recid'],$doEscape);
@@ -574,7 +582,7 @@
 			if($this->isError($cmd)){
 				$this->_lastError = $cmd;
 				$return = $this->getErrInfo($cmd);
-				/* 紀錄錯誤結果 */ $this->log( __METHOD__ ,$return);
+				/* 紀錄錯誤結果 */ $this->log( __METHOD__ ." #".__LINE__ ,$return);
 				return $return;
 			}
 			
@@ -583,12 +591,12 @@
 			if( $this->isError($res) ){
 				$this->_lastError = $res;
 				$return = $this->getErrInfo($res);
-				/* 紀錄錯誤結果 */ $this->log( __METHOD__ ,$return);
+				/* 紀錄錯誤結果 */ $this->log( __METHOD__ ." #".__LINE__ ,$return);
 				return $return;
 			}
 			
 			$this->_lastError = null;
-			/* 紀錄結果 */ $this->log( __METHOD__ ,array("layout"=>$layout,"recid"=>$rec_id));
+			/* 紀錄結果 */ $this->log( __METHOD__ ." #".__LINE__ ,array("layout"=>$layout,"recid"=>$rec_id));
 			return true;
 		}
 		
@@ -613,7 +621,7 @@
 			if($this->isError($layoutObj)){
 				$this->_lastError = $layoutObj;
 				$return = $this->getErrInfo($layoutObj);
-				/* 紀錄錯誤結果 */ $this->log( __METHOD__ ,$return);
+				/* 紀錄錯誤結果 */ $this->log( __METHOD__ ." #".__LINE__ ,$return);
 				return $return;
 			}
 			
@@ -653,14 +661,14 @@
 				$newFvPair[$f]=$v;
 			}
 			if(count($notFiels)>0){
-				/* 紀錄跳過的欄位資訊 */ $this->log( __METHOD__ ,"Skipped fields",$notFiels);
+				/* 紀錄跳過的欄位資訊 */ $this->log( __METHOD__ ." #".__LINE__ ,"Skipped fields",$notFiels);
 			}
-			/* 紀錄準備新增資訊 */ $this->log( __METHOD__ ,array("layout"=>$layout,"data"=>$newFvPair));
+			/* 紀錄準備新增資訊 */ $this->log( __METHOD__ ." #".__LINE__ ,array("layout"=>$layout,"data"=>$newFvPair));
 			$cmd = $this->_fm->newAddCommand($layout,$newFvPair);
 			if($this->isError($cmd)){
 				$this->_lastError = $cmd;
 				$return = $this->getErrInfo($cmd);
-				/* 紀錄錯誤結果 */ $this->log( __METHOD__ ,$return);
+				/* 紀錄錯誤結果 */ $this->log( __METHOD__ ." #".__LINE__ ,$return);
 				return $return;
 			}
 			
@@ -668,7 +676,7 @@
 			if($this->isError($res)){
 				$this->_lastError = $res;
 				$return = $this->getErrInfo($res);
-				/* 紀錄錯誤結果 */ $this->log( __METHOD__ ,$return);
+				/* 紀錄錯誤結果 */ $this->log( __METHOD__ ." #".__LINE__ ,$return);
 				return $return;
 			}
 			
@@ -696,7 +704,7 @@
 		 *  @details 根據不同的 command 移除一些字元
 		 */
 		private function fm_escape( $input, $findCmd = false ,$editCmd = false ) {
-			if (is_array($input)) return array_map( __METHOD__, $input );
+			if (is_array($input)) return array_map( __METHOD__ ." #".__LINE__, $input );
 
 			if ( !empty( $input ) && is_string( $input ) ) {
 				$needle  = array(  '\\',  '/',  "\0",  "\n",  "\r",   "'",   '"', "\x1a",     '<',    '>', '%00');
@@ -740,13 +748,9 @@
 			if( !is_a($fmField,'FileMaker_Field') ) return $data;
 			
 			switch( $fmField->getResult() ){
-				case "number": 	return intval($data);
+				case "number": 	return intval($data) == $data ? intval($data) : $data;//避免數值過大的問題
 				case "text": 	return is_string($data)?$data:(string)$data;
-				case "container":
-					$data = htmlspecialchars_decode($data);
-					if( substr($this->_host,-1)!="/" ) $data = $this->_host.$data;
-					else $data = substr($this->_host,0,-1).$data;
-					return $data;
+				case "container": return $this->_getContainerWithUrl ? $this->_fm->getContainerDataURL($data) : $data;
 				case "date": case "time": case "timestamp":
 					$is_empty=empty($data);
 					$time = strtotime($data);

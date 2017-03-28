@@ -212,16 +212,23 @@ Get record [RecData][1] from given FileMaker_Result object.
 ```
 [1]: Records returned from EzFMDB are all this format.  
   
-### runScript(_$layout, $script [,$param=null]_) 
+### runScript(_$layout, $script [,$params [, ...] ]_) 
 **@param** $layout The layout name to perform this script  
 **@param** $script The script name to be performed  
-**@param** $param The parameter pass to script.  
+**@param** $param Parameters give to script. Multiple params are allowed. EzFMDB will combine them with \r (¶) symbol.  
 **@return** _TRUE / EzFMDB_ERR_ , TRUE when success.  
 Perform a script, note that the value assigned in "Exit Script[]" will not pass to PHP.
 ```php
 	$isSuccess = $db->runScript("LayoutName","ScriptName");
+	$isSuccess = $db->runScript("LayoutName","ScriptName","param1");
+	$isSuccess = $db->runScript("LayoutName","ScriptName","arg1","arg2","arg3");
+	$isSuccess = $db->runScript("LayoutName","ScriptName","data1\rdata2\rdata3");
 ```
   
+---
+---
+  
+### When accessing data from layout , remember you must put those fields on the layout(include repetition fields). Or you will get a Field Missing Error.
 ---
   
 ### select(_$layout , $fields [, **QueryParameters** ]_) 
@@ -254,7 +261,7 @@ Select specific records (according to QueryParameters ) from the layout.
 	$r = $db->select("LayoutName" , "" );
 	
 	//More complex example
-	$r = $db->select("LayoutName","*"
+	$r = $db->select("LayoutName","*",
 		"WHERE", array("age"=>"<10"),		//Find 1,2,3,5 ; Found set [1,2,3,5]
 		"WHERE school='NCKU' AND gender=0", //Find 5,6     ; Found set [1,2,3,5,6]
 		"OMIT name='darkk6'",				//Omit 6       ; Found set [1,2,3,5]

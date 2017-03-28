@@ -209,16 +209,23 @@ WHERE 與 ORDER 條件有兩種使用方法：
 ```
 [1]: 所有透過EzFMDB 取出的 Record 資料皆為這種形式  
   
-### runScript(_$layout, $script [,$param=null]_) 
+### runScript(_$layout, $script [,$params [, ...] ]_) 
 **@param** $layout 要執行 script 的 layout 名稱  
 **@param** $script 要執行的 script 名稱  
-**@param** $param 要傳遞給 script 的參數  
+**@param** $param 執行 Script 的參數，給予多個參數會自動以 \r (¶) 連接所有參數再傳遞給 Script  
 **@return** _TRUE / EzFMDB_ERR_ 成功傳回 TRUE 否則傳回 EzFMDB_ERR  
 執行 Script ， FM Script 的 Exit Script[] 的傳回資料是無法遞給 PHP 的
 ```php
 	$isSuccess = $db->runScript("LayoutName","ScriptName");
+	$isSuccess = $db->runScript("LayoutName","ScriptName","param1");
+	$isSuccess = $db->runScript("LayoutName","ScriptName","arg1","arg2","arg3");
+	$isSuccess = $db->runScript("LayoutName","ScriptName","data1\rdata2\rdata3");
 ```
   
+---
+---
+  
+### 存取資料時，該 layout 上必須要有相對應的欄位 (包含 Repetition)，否則會傳回 Field Missing  
 ---
   
 ### select(_$layout , $fields [, **QueryParameters** ]_) 
@@ -251,7 +258,7 @@ WHERE 與 ORDER 條件有兩種使用方法：
 	$r = $db->select("LayoutName" , "" );
 	
 	//組合實例
-	$r = $db->select("LayoutName","*"
+	$r = $db->select("LayoutName","*",
 		"WHERE", array("age"=>"<10"),		//找出 1,2,3,5 ; Found set [1,2,3,5]
 		"WHERE school='NCKU' AND gender=0", //找出 5,6     ; Found set [1,2,3,5,6]
 		"OMIT name='darkk6'",				//隱藏 6       ; Found set [1,2,3,5]
