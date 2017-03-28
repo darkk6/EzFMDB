@@ -98,7 +98,9 @@ There are two ways to use WHERE and ORDER Part:
 - Work with : date, timestamp
 - FM will return date type in "mm/dd/yyyy" , set to true if you want "yyyy/mm/dd"
 - The same concept in the date part of timestamp type field .
-
+  
+**setContainerWithURL(_$boolean_)** : Convert container URL. [false]
+  
 **setDebug(_$param_)** : Set debug enabled or assign logger object
 - $param can be true/false or logger object
 - Give true/false to enable/disable debug mode.
@@ -236,7 +238,7 @@ Perform a script, note that the value assigned in "Exit Script[]" will not pass 
 **@param** $fields Field name to be select. Can be sql-like sytax string or array  
 **@QueryParameters** See **Query Parameters** section  
 **@return** _array( RecData ) / EzFMDB_ERR_  
-Select specific records (according to QueryParameters ) from the layout.
+Select specific records (according to QueryParameters ) from the layout. An empty array will return when no record meets the condition.  
   
 | idx |name  |gender|school|age|The Code|  
 |:---:|:----:|:----:|:----:|:-:|:------:|  

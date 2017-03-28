@@ -97,7 +97,9 @@ WHERE 與 ORDER 條件有兩種使用方法：
 - 作用於 date, timestamp 這些欄位
 - date FM 格式原本是 mm/dd/yyyy , 轉為 yyyy/mm/dd
 - timestamp 日期部分格式亦同
-
+  
+**setContainerWithURL(_$boolean_)** : 轉換 Container 型態得到的 URL. [false]
+  
 **setDebug(_$param_)** : 設定除錯模式
 - $param 可為 true/false 或 logger 物件 , 用以指定除錯輸出或改變 logger 物件
 - 傳入的 logger 物件必須要有一個 public function log($string) 方法
@@ -233,7 +235,7 @@ WHERE 與 ORDER 條件有兩種使用方法：
 **@param** $fields 可為字串(逗號分隔)或陣列指定每個欄位名稱。  
 **@QueryParameters** 參考 **查詢參數**  
 **@return** _array( RecData ) / EzFMDB_ERR_  
-對指定 layout 取得資料(根據 QueryParameters 設定)  
+對指定 layout 取得資料(根據 QueryParameters 設定)，條件找不到資料時傳回空陣列  
   
 | idx |name  |gender|school|age|The Code|  
 |:---:|:----:|:----:|:----:|:-:|:------:|  

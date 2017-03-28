@@ -291,7 +291,7 @@
 		 *  					可以使用空字串 "" 代表只選出 FileMaker 內部用的 record_id (fm_recid)
 		 *  					但欄位名稱不可有逗號，若需要，請使用 string array 形式
 		 *  					
-		 *  @return 查詢後的結果(會多帶一個 fm_recid 欄位) 或 EzFMDB_ERR
+		 *  @return 查詢後的結果(會多帶一個 fm_recid 欄位) 或 EzFMDB_ERR , 找不到資料會傳回空陣列
 		 *  
 		 *  @note 	1. 傳回的資料順序不會按照 $fields 所給的順序排序
 		 *  		2. 傳回資料會根據設定轉型 , 時間、日期格式若指定要轉為 int 且原內容為空時，會傳回 -1
@@ -376,6 +376,7 @@
 			$isError = $this->isError( $fmResult ); //這個不可能出現 EZFMDB_ERR
 			if ( $isError == FM_ERR ){
 				$this->_lastError = $fmResult;
+				if( $fmResult->code ==401 ) return array();//若是指定條件找不到資料，傳回空陣列(但還是要記錄 last error)
 				$return = $this->getErrInfo($fmResult);
 				/* 紀錄錯誤結果 */ $this->log( __METHOD__ ." #".__LINE__ ,$return);
 				return $return;
