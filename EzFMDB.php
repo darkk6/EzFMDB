@@ -40,6 +40,8 @@
 				$_convertTimesFormat=false,	//時間類型(date,time,timestamp) 轉為 yyyy/mm/dd HH:mm:ss 格式(字串)
 				$_getContainerWithUrl=false;//取得 container url 時，是否包含前面的網址( false 會由 /fmi/... 開始， true 則為 http(s)://... 開頭)
 		
+		private $_errorAsString=true;		//傳回錯誤的時候預設為哪種
+		
 		
 	/*=================== @BLOCK Constructor 建構子 ===================*/
 		/**
@@ -67,6 +69,10 @@
 		public function setContainerWithURL($val){
 			$this->_getContainerWithUrl = boolval($val);
 		}
+		public function setErrorAsString($val){
+			$this->_errorAsString = boolval($val);
+		}
+		
 		
 		/**
 		 *  @brief 		取得原 FileMaker 物件
@@ -138,7 +144,9 @@
 		 * 		若指定 $json=false , 則傳回內容為陣列 , 否則為 json string
 		 *
 		 */
-		public function getErrInfo($errObj,$json=true){
+		public function getErrInfo($errObj , $json=NULL ){
+			if( $json===NULL ) $json=$this->_errorAsString;
+			
 			$errType = $this->isError($errObj);
 			if( $errType==EZFMDB_ERR ){
 				return is_string($errObj) ? ( $json ? $errObj : json_decode($errObj,true) ) : ( $json ? json_encode($errObj) : $errObj );
@@ -429,6 +437,8 @@
 				/* 紀錄錯誤結果 */ $this->log( __METHOD__ ." #".__LINE__ ,$selectResult);
 				return $selectResult;
 			}else{
+				if( count($selectResult)==0 ) return 0;
+				
 				$lastArg = $args[count($args)-1];
 				$doEscape = ( is_bool($lastArg) ? $lastArg : true);
 				
@@ -555,6 +565,8 @@
 				/* 紀錄錯誤結果 */ $this->log( __METHOD__ ." #".__LINE__ ,$selectResult);
 				return $selectResult;
 			}else{
+				if( count($selectResult)==0 ) return 0;
+				
 				$lastArg = $args[count($args)-1];
 				$doEscape = ( is_bool($lastArg) ? $lastArg : true);
 				

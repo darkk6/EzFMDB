@@ -101,6 +101,9 @@ There are two ways to use WHERE and ORDER Part:
   
 **setContainerWithURL(_$boolean_)** : Convert container URL. [false]
   
+**setErrorAsString(_$boolean_)** : When return EzFMDB_ERR , set return with json string or array. [true]
+- Set to FALSE will return array when not assign **getErrInfo** "_$json_" parameter.
+  
 **setDebug(_$param_)** : Set debug enabled or assign logger object
 - $param can be true/false or logger object
 - Give true/false to enable/disable debug mode.
@@ -149,7 +152,7 @@ Get last error object.
 
 ### getErrInfo(_$obj [,$json]_) 
 **@param** $obj FileMaker_Error object to be convert  
-**@param** $json return with json string [true]  
+**@param** $json return with json string, default value is depend on _setErrorAsString()_ setting
 **@return** _EzFMDB_ERR_  
 Convert FileMaker_Error into EzFMDB_ERR. This method will return array when $json = false or **null** when the given object is not a FileMaker_Error .
 ```php
@@ -238,7 +241,7 @@ Perform a script, note that the value assigned in "Exit Script[]" will not pass 
 **@param** $fields Field name to be select. Can be sql-like sytax string or array  
 **@QueryParameters** See **Query Parameters** section  
 **@return** _array( RecData ) / EzFMDB_ERR_  
-Select specific records (according to QueryParameters ) from the layout. An empty array will return when no record meets the condition.  
+Select specific records (according to QueryParameters ) from the layout. An empty array will return when no records are found.  
   
 | idx |name  |gender|school|age|The Code|  
 |:---:|:----:|:----:|:----:|:-:|:------:|  

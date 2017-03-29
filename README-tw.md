@@ -100,6 +100,10 @@ WHERE 與 ORDER 條件有兩種使用方法：
   
 **setContainerWithURL(_$boolean_)** : 轉換 Container 型態得到的 URL. [false]
   
+**setErrorAsString(_$boolean_)** : 傳回錯誤時，若為 EzFMDB_ERR 時預設是否以 json 字串傳回. [true]
+- 設為 false 會傳回陣列
+- 只有在 **getErrInfo** 沒指定 _$json_ 參數時才會以此設定為主
+  
 **setDebug(_$param_)** : 設定除錯模式
 - $param 可為 true/false 或 logger 物件 , 用以指定除錯輸出或改變 logger 物件
 - 傳入的 logger 物件必須要有一個 public function log($string) 方法
@@ -146,7 +150,7 @@ WHERE 與 ORDER 條件有兩種使用方法：
   
 ### getErrInfo(_$obj [,$json]_) 
 **@param** $obj 要轉換的 FileMaker_Error 物件  
-**@param** $json 是否以 json string 形式傳回 [true]  
+**@param** $json 是否以 json string 形式傳回 , 預設與 _setErrorAsString()_ 的設定有關
 **@return** _EzFMDB_ERR_  
 將 FileMaker_Error 轉為 EzFMDB_ERR，根據 $json 參數，可能傳回 _array_ 或 _string_ 或 **null**
 ```php
