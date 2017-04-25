@@ -513,11 +513,13 @@
 				if(is_array($v)){
 					for($ridx=0;$ridx<$repCount;$ridx++){
 						if( array_key_exists($ridx,$v) ){
+							$v[$ridx] = $this->check_DateTimeField($fieldObj,$v[$ridx]);
 							$v[$ridx] = ( $doEscape ? $this->fm_escape( $v[$ridx] ) : $v[$ridx] );
 							$cmd->setField( $f , $v[$ridx] , $ridx );
 						}
 					}
 				}else{
+					$v = $this->check_DateTimeField($fieldObj,$v);
 					$v = ( $doEscape ? $this->fm_escape( $v ) : $v );
 					$cmd->setField( $f , $v );
 				}
@@ -665,10 +667,12 @@
 				if(is_array($v)){
 					for($ridx=0;$ridx<$repCount;$ridx++){
 						if( array_key_exists($ridx,$v) ){
+							$v[$ridx] = $this->check_DateTimeField($fieldObj,$v[$ridx]);
 							$v[$ridx] = ( $doEscape ? $this->fm_escape( $v[$ridx] ) : $v[$ridx] );
 						}
 					}
 				}else{
+					$v = $this->check_DateTimeField($fieldObj,$v);
 					$v = ( $doEscape ? $this->fm_escape( $v ) : $v );
 				}
 				$newFvPair[$f]=$v;
@@ -951,6 +955,31 @@
 			$repalce = "$1";
 			if( strpos($str,$ch)===FALSE ) $repalce = "$2";
 			return preg_replace($ptn,$repalce,$str);
+		}
+		
+		/*
+			處理 date, time 和 timestamp 的格式
+		*/
+		private function check_DateTimeField($fmFieldObj,$val){
+			$type = $fmFieldObj->getResult();
+			if( $type!="date" && $type!="time" && $type!="timestamp" ) return $val;
+			
+			$time = FALSE;
+			if( is_int($val) ) $time = $val;
+			else if( is_numeric($val) ) $time = intval($val);
+			else if( is_string($val) ) $time = strtotime($val);
+
+			if($time===FALSE) return $val;
+			
+			switch($type){
+				case "date":
+					return date("m-d-Y",$time);
+				case "time":
+					return date("H:i:s",$time);
+				case "timestamp":
+					return date("m-d-Y H:i:s",$time);
+			}
+			return $val;
 		}
 	}
 ?>
