@@ -6,7 +6,7 @@
  * 更簡單操作 FileMaker PHP API 的 wrapper class
  *
  * @Author darkk6 (LuChun Pan)
- * @Version 1.0.0
+ * @Version 1.2.0
  *
  * @License GPLv3
  *
@@ -26,6 +26,7 @@
 		const GTET = '≥';
 		const NEQL = '≠';
 		const CART = '¶'; 				//carriage return symbol
+		const VERSION = '1.2.0';
 	
 	/*** private members ***/
 		private $_fm, 					//存放 FM API 物件
@@ -38,7 +39,9 @@
 		private $_noCastResult=false,		//傳回資料強制以 string 呈現 (除了 fm_recid 外)
 				$_castTimesToInt=false,		//時間類型(date,time,timestamp) 強制轉為 int
 				$_convertTimesFormat=false,	//時間類型(date,time,timestamp) 轉為 yyyy/mm/dd HH:mm:ss 格式(字串)
-				$_getContainerWithUrl=false;//取得 container url 時，是否包含前面的網址( false 會由 /fmi/... 開始， true 則為 http(s)://... 開頭)
+				$_getContainerWithUrl=false,//取得 container url 時，是否包含前面的網址( false 會由 /fmi/... 開始， true 則為 http(s)://... 開頭)
+				$_escapeSkipCR = false,		//設定在字元跳脫的時候是否要略過 \r 的跳脫
+				$_escapeSkipLF = false;		//設定在字元跳脫的時候是否要略過 \n 的跳脫
 		
 		private $_errorAsString=true;		//傳回錯誤的時候預設為哪種
 		
@@ -57,6 +60,8 @@
 		}
 	
 	/*=================== @BLOCK public methods for common use ===================*/
+		public function getVersion(){ return self::VERSION; }
+		
 		public function setCastResult($val){
 			$this->_noCastResult = !boolval($val);
 		}
@@ -71,6 +76,10 @@
 		}
 		public function setErrorAsString($val){
 			$this->_errorAsString = boolval($val);
+		}
+		public function setSkipEscapeCRLF($valCR,$valLF){
+			$this->_escapeSkipCR = boolval($valCR);
+			$this->_escapeSkipLF = boolval($valLF);
 		}
 		
 		
@@ -707,7 +716,7 @@
 		 */
 		private function doCheckRequire(){
 			//檢查是否有啟用 curl
-			if( !function_exists( 'curl_init' ) ){
+			if( !extension_loaded("curl") ){ //!function_exists( 'curl_init' )
 				die( '請啟用 cURL 模組 , Please enable "cURL" php module.' );
 			}
 			//檢查是否有引入 FileMaker API
@@ -724,8 +733,17 @@
 			if (is_array($input)) return array_map( __METHOD__ ." #".__LINE__, $input );
 
 			if ( !empty( $input ) && is_string( $input ) ) {
-				$needle  = array(  '\\',  '/',  "\0",  "\n",  "\r",   "'",   '"', "\x1a",     '<',    '>', '%00');
-				$replace = array('\\\\', '\/', '\\0', '\\n', '\\r', "\\'", '\\"',  '\\Z', '\<\\/', '\\/>',   '');
+				$needle  = array(  '\\',  '/',  "\0",   "'",   '"', "\x1a",     '<',    '>', '%00');
+				$replace = array('\\\\', '\/', '\\0', "\\'", '\\"',  '\\Z', '\<\\/', '\\/>',   '');
+				
+				if( !$this->_escapeSkipCR ){
+					$needle[]  =  "\r";
+					$replace[] = '\\r';
+				}
+				if( !$this->_escapeSkipLF ){
+					  $needle[] =  "\n";
+					 $replace[] = '\\n';
+				}
 				
 				if($editCmd){
 					$needle[]  =  '*';   $needle[] = '@';
