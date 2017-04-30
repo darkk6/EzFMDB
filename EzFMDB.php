@@ -39,6 +39,7 @@
 		private $_noCastResult=false,		//傳回資料強制以 string 呈現 (除了 fm_recid 外)
 				$_castTimesToInt=false,		//時間類型(date,time,timestamp) 強制轉為 int
 				$_convertTimesFormat=false,	//時間類型(date,time,timestamp) 轉為 yyyy/mm/dd HH:mm:ss 格式(字串)
+				$_doForceCastDateTime=false,//既使 $_noCastResult 設為 false , 是否也要根據設定轉換時間日期格式 (date,time,timestamp)
 				$_getContainerWithUrl=false,//取得 container url 時，是否包含前面的網址( false 會由 /fmi/... 開始， true 則為 http(s)://... 開頭)
 				$_escapeSkipCR = false,		//設定在字元跳脫的時候是否要略過 \r 的跳脫
 				$_escapeSkipLF = false;		//設定在字元跳脫的時候是否要略過 \n 的跳脫
@@ -62,6 +63,9 @@
 	/*=================== @BLOCK public methods for common use ===================*/
 		public function getVersion(){ return self::VERSION; }
 		
+		public function setForceCastDateTime($val){
+			$this->_doForceCastDateTime = boolval($val);
+		}
 		public function setCastResult($val){
 			$this->_noCastResult = !boolval($val);
 		}
@@ -779,10 +783,16 @@
 		 *  @return 根據設定傳回要放入陣列的資料(轉型後)
 		 */
 		private function doDataTypeCast($fmField,$data){
-			if($this->_noCastResult) return $data;
 			if( !is_a($fmField,'FileMaker_Field') ) return $data;
 			
-			switch( $fmField->getResult() ){
+			$fieldType = $fmField->getResult();
+			
+			if( $this->_noCastResult ){
+				if( !($this->_doForceCastDateTime && ($fieldType=='date' || $fieldType=='time' || $fieldType=='timestamp')) )
+					return $data;
+			}
+			
+			switch( $fieldType ){
 				case "number": 	return intval($data) == $data ? intval($data) : $data;//避免數值過大的問題
 				case "text": 	return is_string($data)?$data:(string)$data;
 				case "container": return $this->_getContainerWithUrl ? $this->_fm->getContainerDataURL($data) : $data;
