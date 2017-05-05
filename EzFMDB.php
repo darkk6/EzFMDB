@@ -6,7 +6,7 @@
  * 更簡單操作 FileMaker PHP API 的 wrapper class
  *
  * @Author darkk6 (LuChun Pan)
- * @Version 1.2.0
+ * @Version 1.2.1
  *
  * @License GPLv3
  *
@@ -26,7 +26,7 @@
 		const GTET = '≥';
 		const NEQL = '≠';
 		const CART = '¶'; 				//carriage return symbol
-		const VERSION = '1.2.0';
+		const VERSION = '1.2.1';
 	
 	/*** private members ***/
 		private $_fm, 					//存放 FM API 物件
@@ -42,7 +42,11 @@
 				$_doForceCastDateTime=false,//既使 $_noCastResult 設為 false , 是否也要根據設定轉換時間日期格式 (date,time,timestamp)
 				$_getContainerWithUrl=false,//取得 container url 時，是否包含前面的網址( false 會由 /fmi/... 開始， true 則為 http(s)://... 開頭)
 				$_escapeSkipCR = false,		//設定在字元跳脫的時候是否要略過 \r 的跳脫
-				$_escapeSkipLF = false;		//設定在字元跳脫的時候是否要略過 \n 的跳脫
+				$_escapeSkipLF = false,		//設定在字元跳脫的時候是否要略過 \n 的跳脫
+				$_escapeSkipValue = true;	//當 escape 設為 true 時，是否強制跳過對 value 的 escape
+				
+		private $_fullHtmlDecode = false,			//轉換文字的時候採用 html_entity_decode (true) 還是 htmlspecialchars_decode (false)
+				$_decodeHtmlTypes = array("text");	//哪些類型的欄位要執行 html decode
 		
 		private $_errorAsString=true;		//傳回錯誤的時候預設為哪種
 		
@@ -65,25 +69,55 @@
 		
 		public function setForceCastDateTime($val){
 			$this->_doForceCastDateTime = boolval($val);
+			return $this;
 		}
 		public function setCastResult($val){
 			$this->_noCastResult = !boolval($val);
+			return $this;
 		}
 		public function setCastTimesToInt($val){
 			$this->_castTimesToInt = boolval($val);
+			return $this;
 		}
 		public function setConvertTimesFormat($val){
 			$this->_convertTimesFormat = boolval($val);
+			return $this;
 		}
 		public function setContainerWithURL($val){
 			$this->_getContainerWithUrl = boolval($val);
+			return $this;
 		}
 		public function setErrorAsString($val){
 			$this->_errorAsString = boolval($val);
+			return $this;
 		}
 		public function setSkipEscapeCRLF($valCR,$valLF){
 			$this->_escapeSkipCR = boolval($valCR);
 			$this->_escapeSkipLF = boolval($valLF);
+			return $this;
+		}
+		public function setSkipEscapeValue($val){
+			$this->_escapeSkipValue = $val;
+			return $this;
+		}
+		public function setFullHtmlDecode($val){
+			$this->_fullHtmlDecode = $val;
+			return $this;
+		}
+		public function setHtmlDecodeType(){
+			$ALLOW_MAP = array( "number","text","container","date","time","timestamp" );
+			$args = func_get_args();
+			$val = array();
+			foreach($args as $arg){
+				if( !in_array($arg,$ALLOW_MAP) ) continue;
+				$val[] = $arg;
+			}
+			$this->_decodeHtmlTypes = $val;
+			return $this;
+		}
+		
+		public function getHtmlDecodeType($asString = false){
+			return $asString ? json_encode($this->_decodeHtmlTypes) : $this->_decodeHtmlTypes;
 		}
 		
 		
@@ -133,6 +167,7 @@
 			}else{
 				$this->_debug = false; $this->_logger = NULL;
 			}
+			return $this;
 		}
 		
 		/**
@@ -214,6 +249,7 @@
 			if(strpos($methodName,"EzFMDB::")===0) $methodName = str_replace("EzFMDB::","",$methodName);
 			
 			$this->_logger->log( sprintf("[EzFM @ %s] : %s",$methodName,$msg) );
+			return $this;
 		}
 		
 	/*=================== @BLOCK public methods to FileMaker(Not databases) ===================*/
@@ -247,7 +283,7 @@
 			if($this->isError($layoutObj)){
 				$this->_lastError = $layoutObj;
 				$return = $this->getErrInfo($layoutObj);
-				/* 紀錄錯誤結果 */ $this->log( __METHOD__ ." #".__LINE__ ,$return);
+				/* 紀錄錯誤結果 */ $this->log( __METHOD__ ." #".__LINE__ ,$return,$layout);
 				return $return;
 			}
 			$result = array();
@@ -285,7 +321,7 @@
 			if( $this->isError($cmd) ){
 				$this->_lastError = $cmd;
 				$return = $this->getErrInfo($cmd);
-				/* 紀錄錯誤結果 */ $this->log( __METHOD__ ." #".__LINE__ ,$return);
+				/* 紀錄錯誤結果 */ $this->log( __METHOD__ ." #".__LINE__ ,$return, $layout, $scriptName, $params);
 				return $return;
 			}
 			
@@ -293,7 +329,7 @@
 			if( $this->isError($res) ){
 				$this->_lastError = $res;
 				$return = $this->getErrInfo($res);
-				/* 紀錄錯誤結果 */ $this->log( __METHOD__ ." #".__LINE__ ,$return);
+				/* 紀錄錯誤結果 */ $this->log( __METHOD__ ." #".__LINE__ ,$return,"execute");
 				return $return;
 			}
 			
@@ -370,8 +406,8 @@
 					$findReq->setOmit($request["OMIT"]);
 					foreach($request["FACTOR"] as $field => $value ){
 						//因為 where 條件( $value 的部分 )可能出現 > < , 因此要註記是 findCmd
-						$field = ( $doEscape ? $this->fm_escape( $field        ) : $field );
-						$value = ( $doEscape ? $this->fm_escape( $value , true ) : $value );
+						$field = ( $doEscape 							  ? $this->fm_escape( $field        ) : $field );
+						$value = ( $doEscape && !$this->_escapeSkipValue  ? $this->fm_escape( $value , true ) : $value );
 						$findReq->addFindCriterion( $field, $value );
 					}
 					$cmd->add( $priority+1 , $findReq );
@@ -515,7 +551,7 @@
 				
 				$fieldObj = $layoutObj->getField($f);	//等一下用來計算 repetition
 				if($this->isError($fieldObj)){
-					$this->log(__METHOD__ ." #".__LINE__,$this->getErrInfo($fieldObj));
+					$this->log(__METHOD__ ." #".__LINE__,$this->getErrInfo($fieldObj),$f);
 					continue;
 				}
 				$repCount = $fieldObj->getRepetitionCount();
@@ -527,13 +563,13 @@
 					for($ridx=0;$ridx<$repCount;$ridx++){
 						if( array_key_exists($ridx,$v) ){
 							$v[$ridx] = $this->check_DateTimeField($fieldObj,$v[$ridx]);
-							$v[$ridx] = ( $doEscape ? $this->fm_escape( $v[$ridx] ) : $v[$ridx] );
+							$v[$ridx] = ( $doEscape && !$this->_escapeSkipValue ? $this->fm_escape( $v[$ridx] ) : $v[$ridx] );
 							$cmd->setField( $f , $v[$ridx] , $ridx );
 						}
 					}
 				}else{
 					$v = $this->check_DateTimeField($fieldObj,$v);
-					$v = ( $doEscape ? $this->fm_escape( $v ) : $v );
+					$v = ( $doEscape && !$this->_escapeSkipValue ? $this->fm_escape( $v ) : $v );
 					$cmd->setField( $f , $v );
 				}
 				
@@ -681,12 +717,12 @@
 					for($ridx=0;$ridx<$repCount;$ridx++){
 						if( array_key_exists($ridx,$v) ){
 							$v[$ridx] = $this->check_DateTimeField($fieldObj,$v[$ridx]);
-							$v[$ridx] = ( $doEscape ? $this->fm_escape( $v[$ridx] ) : $v[$ridx] );
+							$v[$ridx] = ( $doEscape && !$this->_escapeSkipValue ? $this->fm_escape( $v[$ridx] ) : $v[$ridx] );
 						}
 					}
 				}else{
 					$v = $this->check_DateTimeField($fieldObj,$v);
-					$v = ( $doEscape ? $this->fm_escape( $v ) : $v );
+					$v = ( $doEscape && !$this->_escapeSkipValue ? $this->fm_escape( $v ) : $v );
 				}
 				$newFvPair[$f]=$v;
 			}
@@ -786,6 +822,11 @@
 			if( !is_a($fmField,'FileMaker_Field') ) return $data;
 			
 			$fieldType = $fmField->getResult();
+			
+			if( in_array($fieldType,$this->_decodeHtmlTypes) ){
+				$data = ( $this->_fullHtmlDecode ? html_entity_decode($data) : htmlspecialchars_decode($data) );
+			}
+			
 			
 			if( $this->_noCastResult ){
 				if( !($this->_doForceCastDateTime && ($fieldType=='date' || $fieldType=='time' || $fieldType=='timestamp')) )

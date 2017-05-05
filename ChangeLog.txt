@@ -1,0 +1,13 @@
+
+- v1.2.1 : [2017.05.05]
+
+	+ Some detailed log message on error
+	! Make some methods chainable
+	
+	! Values now will NOT be escaped (can be setup)
+	+ New method setSkipEscapeValue(boolean) - default "TRUE"
+	
+	! Fix html entities(&lt;...) when get data from server
+	+ New method setFullHtmlDecode(boolean) - default FALSE
+	+ New method setHtmlDecodeType(boolean) - default "text"
+	+ New method getHtmlDecodeType(boolean)
