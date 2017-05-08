@@ -69,7 +69,21 @@ WHERE 與 ORDER 條件有兩種使用方法：
 2. 同樣**在所有資料中**找出 school = 'NCKU' 且 gender = 0 的紀錄
 3. 在**上述已找到**的資料中，移除 name = 'darkk6' 紀錄
 4. 將這些資料刪除 ( idx=1,4,5 三筆 )
-
+  
+同一組 WHERE 條件，相同欄位只能出現一次，若有需要請透過 OMIT 達成，舉例：
+```php
+	//假設要尋找 0 < age < 10 的資料
+	//錯誤：最後條件會只剩下 age>0
+	$r = $db->delete("layout",
+		"WHERE", array( "age" => "<10" , "age" => ">0")
+	);
+	//正確：改用 OMIT 達成
+	$r = $db->delete("layout",
+		"WHERE", array( "age" => "<10" ) ,	//先找出 <10 的
+		"OMIT" , array( "age" => "<=0" )	//移除 <=0 的
+	);
+```
+  
 ---
 
 # Usage

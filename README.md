@@ -70,6 +70,22 @@ There are two ways to use WHERE and ORDER Part:
 	);
 	//Finally, this will find 3 records (idx=1,4,5) and then delete it.
 ```
+  
+For one group of WHERE part , the same field name can only be assign once.  
+You can use "OMIT" in condition :
+```php
+	//We want to find records that : 0 < age < 10
+	//Wrong : the condition will be only 'age>0'
+	$r = $db->delete("layout",
+		"WHERE", array( "age" => "<10" , "age" => ">0")
+	);
+	//Correct : use OMIT
+	$r = $db->delete("layout",
+		"WHERE", array( "age" => "<10" ) ,	//Find age < 10
+		"OMIT" , array( "age" => "<=0" )	//Remove age <=0
+	);
+```
+  
 ---
 
 # Usage
