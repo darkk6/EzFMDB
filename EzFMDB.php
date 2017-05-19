@@ -6,7 +6,7 @@
  * 更簡單操作 FileMaker PHP API 的 wrapper class
  *
  * @Author darkk6 (LuChun Pan)
- * @Version 1.2.1
+ * @Version 1.2.2
  *
  * @License GPLv3
  *
@@ -26,7 +26,7 @@
 		const GTET = '≥';
 		const NEQL = '≠';
 		const CART = '¶'; 				//carriage return symbol
-		const VERSION = '1.2.1';
+		const VERSION = '1.2.2';
 	
 	/*** private members ***/
 		private $_fm, 					//存放 FM API 物件
@@ -401,6 +401,8 @@
 			
 			//指定條件
 			if( $hasWhere ){
+				//修正如果第一個條件就是 OMIT , 要先執行一個 dummy 的 WHERE
+				$pFix=0;
 				foreach ($query["WHERE"] as $priority => $request){
 					$findReq = $this->_fm->newFindRequest($layout);	//只要上面 $cmd 沒問題，這邊應該就不會有問題了
 					$findReq->setOmit($request["OMIT"]);
@@ -410,7 +412,17 @@
 						$value = ( $doEscape && !$this->_escapeSkipValue  ? $this->fm_escape( $value , true ) : $value );
 						$findReq->addFindCriterion( $field, $value );
 					}
-					$cmd->add( $priority+1 , $findReq );
+					
+					//第一個就是 OMIT , 要做修正 , 這個看起來是 FM PHP 本身的 BUG
+					if($priority==0 && $request["OMIT"] && count($request["FACTOR"])>0){
+						$fixField = array_keys($request["FACTOR"]);
+						$omitFix = $this->_fm->newFindRequest($layout);
+						$omitFix->setOmit(false);
+						$omitFix->addFindCriterion( $fixField[0], "" );
+						$cmd->add( $priority+$pFix+1 , $omitFix );
+						$pFix++;
+					}
+					$cmd->add( $priority+$pFix+1 , $findReq );
 				}
 			}
 			//指定排序方式
